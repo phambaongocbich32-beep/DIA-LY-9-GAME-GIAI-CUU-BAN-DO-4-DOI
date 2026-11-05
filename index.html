@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Giải cứu bản đồ – Chinh phục vùng Trung du và miền núi phía Bắc</title>
+<style>
+:root{
+  --ink:#1d2b3a; --cream:#fff8e6; --gold:#ffc83d; --gold2:#f59e0b; --green:#2f9e5b; --green2:#1f7a43;
+  --sky:#38bdf8; --red:#ef5350; --blue:#3b82f6; --purple:#8b5cf6; --orange:#fb923c; --teal:#14b8a6;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden}
+body{font-family:"Be Vietnam Pro","Segoe UI","Roboto","Helvetica Neue",Arial,sans-serif;color:var(--ink);background:#7dd3fc;user-select:none}
+button{font-family:inherit;cursor:pointer;border:none}
+
+/* ===== Background ===== */
+#bg{position:fixed;inset:0;z-index:0}
+#bg svg{width:100%;height:100%;display:block}
+.cloud{animation:drift linear infinite}
+.c1{animation-duration:70s}.c2{animation-duration:95s;animation-delay:-30s}.c3{animation-duration:120s;animation-delay:-60s}
+@keyframes drift{from{transform:translateX(-300px)}to{transform:translateX(1900px)}}
+.mist{animation:mist 12s ease-in-out infinite alternate}
+@keyframes mist{from{transform:translateX(-40px);opacity:.55}to{transform:translateX(40px);opacity:.85}}
+.sunrays{transform-origin:1280px 150px;animation:spin 60s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ===== App shell ===== */
+#app{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column}
+.screen{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;padding:2vh 3vw}
+.screen.on{display:flex;animation:pop .5s cubic-bezier(.2,1.3,.4,1)}
+@keyframes pop{from{opacity:0;transform:scale(.92) translateY(20px)}to{opacity:1;transform:none}}
+
+.glass{background:rgba(255,255,255,.86);backdrop-filter:blur(6px);border-radius:28px;box-shadow:0 12px 0 rgba(0,0,0,.12),0 24px 50px rgba(10,40,70,.3);border:4px solid #fff}
+
+/* ===== Buttons ===== */
+.btn{font-size:clamp(18px,2.4vw,30px);font-weight:800;color:#fff;padding:.6em 1.6em;border-radius:22px;background:linear-gradient(#ffb02e,#f97316);
+  box-shadow:0 8px 0 #c2570c,0 14px 24px rgba(0,0,0,.25);transition:transform .15s,box-shadow .15s;position:relative;text-shadow:0 2px 0 rgba(0,0,0,.2)}
+.btn:hover{transform:translateY(-3px) scale(1.03);box-shadow:0 11px 0 #c2570c,0 18px 28px rgba(0,0,0,.28)}
+.btn:active{transform:translateY(6px);box-shadow:0 2px 0 #c2570c}
+.btn.green{background:linear-gradient(#4ade80,#16a34a);box-shadow:0 8px 0 #0f6d31,0 14px 24px rgba(0,0,0,.25)}
+.btn.green:hover{box-shadow:0 11px 0 #0f6d31,0 18px 28px rgba(0,0,0,.28)}
+.btn.green:active{box-shadow:0 2px 0 #0f6d31}
+.btn.blue{background:linear-gradient(#60a5fa,#2563eb);box-shadow:0 8px 0 #1a40a0,0 14px 24px rgba(0,0,0,.25)}
+.btn.blue:active{box-shadow:0 2px 0 #1a40a0}
+.btn.small{font-size:clamp(14px,1.5vw,19px);padding:.5em 1.1em;border-radius:16px;box-shadow:0 5px 0 #c2570c}
+.btn.small.blue{box-shadow:0 5px 0 #1a40a0}
+.btn.small.green{box-shadow:0 5px 0 #0f6d31}
+.btn.small:active{transform:translateY(4px);box-shadow:0 1px 0 #000}
+.pulse{animation:pulse 1.4s ease-in-out infinite}
+@keyframes pulse{50%{transform:scale(1.06)}}
+
+/* ===== Start screen ===== */
+.title-wrap{text-align:center;transform:perspective(900px) rotateX(6deg)}
+.badge-top{display:inline-block;background:#fff;color:var(--green2);font-weight:800;padding:.35em 1.2em;border-radius:99px;font-size:clamp(13px,1.6vw,20px);box-shadow:0 5px 0 rgba(0,0,0,.15);margin-bottom:1.2vh;letter-spacing:.08em}
+h1.game{font-size:clamp(34px,7vw,96px);line-height:1.02;font-weight:900;color:#fff;
+  text-shadow:0 4px 0 #1f7a43,0 8px 0 #166534,0 12px 0 #14532d,0 20px 30px rgba(0,0,0,.4);-webkit-text-stroke:2px #14532d;paint-order:stroke fill}
+h1.game span{color:var(--gold);-webkit-text-stroke:2px #92400e;text-shadow:0 4px 0 #d97706,0 8px 0 #b45309,0 12px 0 #92400e,0 20px 30px rgba(0,0,0,.4)}
+.subtitle{margin-top:2vh;font-size:clamp(16px,2.4vw,32px);font-weight:700;color:#fff;text-shadow:0 3px 8px rgba(0,0,0,.55)}
+.modes{display:flex;gap:2vw;margin-top:4vh;flex-wrap:wrap;justify-content:center}
+.start-guide{position:absolute;left:4vw;bottom:2vh;width:clamp(120px,16vw,260px)}
+.start-tools{position:absolute;right:2vw;top:2vh;display:flex;gap:10px}
+
+/* ===== Team setup ===== */
+.setup{padding:3vh 3vw;max-width:900px;width:92%;text-align:center}
+.setup h2{font-size:clamp(22px,3vw,40px);color:var(--green2);margin-bottom:2vh}
+.teamgrid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:3vh}
+.teamin{display:flex;align-items:center;gap:12px;background:#fff;border-radius:20px;padding:10px 14px;box-shadow:0 5px 0 rgba(0,0,0,.12);border:3px solid var(--tc)}
+.teamin i{width:46px;height:46px;border-radius:50%;background:var(--tc);display:grid;place-items:center;color:#fff;font-style:normal;font-weight:900;font-size:22px;flex:none}
+.teamin input{flex:1;min-width:0;font:inherit;font-size:clamp(16px,2vw,24px);font-weight:700;border:none;outline:none;background:transparent;color:var(--ink)}
+
+/* ===== Top HUD ===== */
+.hud{position:absolute;top:0;left:0;right:0;padding:1.4vh 2vw;display:flex;align-items:center;gap:1.5vw;z-index:5}
+.hud .brand{font-weight:900;color:#fff;text-shadow:0 2px 6px rgba(0,0,0,.5);font-size:clamp(12px,1.3vw,18px);line-height:1.15;max-width:15vw}
+.journey{flex:1;display:flex;align-items:center;gap:0;padding:8px 18px;border-radius:99px;background:rgba(255,255,255,.88);box-shadow:0 5px 0 rgba(0,0,0,.12);position:relative}
+.jnode{display:flex;flex-direction:column;align-items:center;position:relative;z-index:2;flex:none}
+.jnode b{width:clamp(30px,3.2vw,46px);height:clamp(30px,3.2vw,46px);border-radius:50%;display:grid;place-items:center;font-size:clamp(14px,1.6vw,22px);background:#cbd5e1;color:#64748b;border:3px solid #fff;box-shadow:0 3px 0 rgba(0,0,0,.15);transition:all .4s}
+.jnode small{font-size:clamp(9px,.95vw,13px);font-weight:700;color:#64748b;text-align:center;max-width:9vw;margin-top:2px;line-height:1.1}
+.jnode.done b{background:linear-gradient(#4ade80,#16a34a);color:#fff;transform:scale(1.05)}
+.jnode.miss b{background:linear-gradient(#fca5a5,#ef4444);color:#fff}
+.jnode.cur b{background:linear-gradient(#ffd45e,#f59e0b);color:#fff;animation:pulse 1.2s infinite}
+.jnode.cur small{color:var(--gold2)}
+.jline{flex:1;height:8px;background:#cbd5e1;border-radius:9px;margin:0 6px 16px;position:relative;overflow:hidden}
+.jline i{position:absolute;inset:0;width:0;background:linear-gradient(90deg,#4ade80,#16a34a);transition:width .8s}
+.scorebox{background:linear-gradient(#fff7d6,#ffe08a);border-radius:20px;padding:6px 18px;box-shadow:0 5px 0 #c9951c;text-align:center;min-width:clamp(90px,9vw,140px)}
+.scorebox small{display:block;font-weight:800;font-size:clamp(10px,1vw,13px);color:#92400e}
+.scorebox b{font-size:clamp(22px,2.8vw,40px);color:#b45309;font-weight:900}
+.iconbtn{width:clamp(38px,3.6vw,52px);height:clamp(38px,3.6vw,52px);border-radius:16px;background:#fff;font-size:clamp(18px,2vw,26px);box-shadow:0 5px 0 rgba(0,0,0,.15);transition:transform .1s}
+.iconbtn:active{transform:translateY(4px);box-shadow:none}
+
+/* ===== Question screen ===== */
+#sQ{justify-content:flex-start;padding-top:clamp(125px,17vh,170px);padding-bottom:clamp(64px,8vh,90px)}
+.qlayout{display:grid;grid-template-columns:minmax(120px,17vw) 1fr;gap:2vw;width:100%;max-width:1500px;flex:1;min-height:0;align-items:stretch}
+.guide-col{display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.bubble{background:#fff;border-radius:22px;padding:12px 16px;font-weight:700;font-size:clamp(13px,1.4vw,19px);box-shadow:0 6px 0 rgba(0,0,0,.12);position:relative;margin-bottom:16px;text-align:center;border:3px solid var(--gold)}
+.bubble:after{content:"";position:absolute;left:50%;bottom:-16px;margin-left:-12px;border:12px solid transparent;border-top-color:var(--gold);border-bottom:0}
+.guide svg{width:clamp(110px,15vw,230px);animation:bob 2.2s ease-in-out infinite;filter:drop-shadow(0 12px 8px rgba(0,0,0,.3))}
+@keyframes bob{50%{transform:translateY(-12px) rotate(2deg)}}
+.main-col{display:flex;flex-direction:column;gap:2vh;min-height:0}
+.qcard{padding:2.2vh 2.4vw;display:flex;gap:1.6vw;align-items:center}
+.qcard .tag{flex:none;font-weight:900;color:#fff;background:linear-gradient(#34d399,#059669);border-radius:18px;padding:.5em .9em;box-shadow:0 5px 0 #047857;text-align:center;line-height:1.1}
+.qcard .tag small{display:block;font-size:clamp(10px,1vw,14px);opacity:.9}
+.qcard .tag b{font-size:clamp(20px,2.6vw,38px)}
+.qtext{font-size:clamp(20px,3vw,44px);font-weight:800;line-height:1.25;flex:1}
+.qstage{font-size:clamp(12px,1.3vw,18px);font-weight:800;color:var(--green2);letter-spacing:.04em;margin-bottom:.4vh;text-transform:uppercase}
+.timer{flex:none;width:clamp(70px,8vw,120px);height:clamp(70px,8vw,120px);position:relative}
+.timer svg{width:100%;height:100%;transform:rotate(-90deg)}
+.timer circle{fill:none;stroke-width:12}
+.timer .bgc{stroke:#e2e8f0}
+.timer .fg{stroke:#22c55e;stroke-linecap:round;transition:stroke .3s}
+.timer b{position:absolute;inset:0;display:grid;place-items:center;font-size:clamp(22px,3vw,44px);font-weight:900;color:var(--ink)}
+.timer.low b{color:#dc2626;animation:pulse .5s infinite}
+.timer.low .fg{stroke:#ef4444}
+.opts{display:grid;grid-template-columns:1fr 1fr;gap:2vh 1.6vw;flex:1;min-height:0;align-content:start}
+.opt{display:flex;align-items:center;gap:1.2vw;text-align:left;background:#fff;color:var(--ink);padding:1.6vh 1.4vw;border-radius:24px;font-size:clamp(17px,2.4vw,36px);font-weight:700;
+  box-shadow:0 8px 0 var(--oc2),0 14px 24px rgba(0,0,0,.2);border:4px solid var(--oc);transition:transform .15s,box-shadow .15s,background .2s;min-height:clamp(64px,12vh,130px);transform-style:preserve-3d}
+.opt:hover:not(:disabled){transform:translateY(-4px) perspective(600px) rotateX(3deg);box-shadow:0 12px 0 var(--oc2),0 20px 30px rgba(0,0,0,.25)}
+.opt:active:not(:disabled){transform:translateY(6px);box-shadow:0 2px 0 var(--oc2)}
+.opt .l{flex:none;width:clamp(40px,4.6vw,70px);height:clamp(40px,4.6vw,70px);border-radius:18px;background:var(--oc);color:#fff;display:grid;place-items:center;font-size:clamp(20px,2.6vw,40px);font-weight:900;box-shadow:inset 0 -5px 0 rgba(0,0,0,.2)}
+.opt:nth-child(1){--oc:#ef5350;--oc2:#b52e2b}.opt:nth-child(2){--oc:#3b82f6;--oc2:#1e4fb0}
+.opt:nth-child(3){--oc:#22a45d;--oc2:#14703d}.opt:nth-child(4){--oc:#8b5cf6;--oc2:#5b34b8}
+.opt.right{background:#dcfce7;border-color:#16a34a;animation:rightflash .8s}
+.opt.wrong{background:#fee2e2;border-color:#dc2626;animation:shake .5s}
+.opt.picked{background:#fff3bf;border-color:#f59e0b}
+.opt:disabled{cursor:default}
+.opt.dim{opacity:.55}
+@keyframes shake{20%,60%{transform:translateX(-10px)}40%,80%{transform:translateX(10px)}}
+@keyframes rightflash{0%{box-shadow:0 0 0 0 rgba(34,197,94,.9)}100%{box-shadow:0 0 0 40px rgba(34,197,94,0)}}
+
+/* team strip */
+.teamstrip{position:absolute;left:0;right:0;bottom:0;padding:1vh 1vw;display:flex;flex-wrap:wrap;gap:.8vw;justify-content:center;z-index:5}
+.tchip{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.9);border-radius:18px;padding:5px 10px;border:3px solid transparent;box-shadow:0 4px 0 rgba(0,0,0,.14);transition:all .3s}
+.tchip i{width:30px;height:30px;border-radius:50%;background:var(--tc);display:grid;place-items:center;color:#fff;font-style:normal;font-weight:900}
+.tchip span{font-weight:800;font-size:clamp(12px,1.4vw,19px)}
+.tchip b{font-weight:900;font-size:clamp(16px,2vw,28px);color:var(--green2)}
+.tchip.cur{border-color:var(--tc);transform:translateY(-8px) scale(1.08);background:#fff}
+.tchip.done{opacity:.8}
+
+/* feedback panel */
+.fb{position:absolute;inset:0;z-index:20;display:none;align-items:center;justify-content:center;background:rgba(10,30,50,.55)}
+.fb.on{display:flex}
+.fbcard{width:min(900px,92vw);padding:3.5vh 3vw;text-align:center;animation:pop .45s cubic-bezier(.2,1.4,.4,1)}
+.fbcard h3{font-size:clamp(26px,4vw,56px);font-weight:900;margin-bottom:1vh}
+.fbcard.ok h3{color:#16a34a}.fbcard.no h3{color:#ea580c}
+.fbans{font-size:clamp(16px,2vw,28px);font-weight:700;margin:1vh 0}
+.fbans b{color:#16a34a}
+.fbexp{font-size:clamp(15px,1.8vw,24px);background:#fef9e7;border-radius:18px;padding:1.4vh 1.4vw;margin:1.6vh 0 2.6vh;line-height:1.45;border:3px dashed #f5c542}
+.pts{display:inline-block;font-weight:900;font-size:clamp(22px,3vw,44px);color:#b45309;background:linear-gradient(#fff7d6,#ffe08a);border-radius:99px;padding:.15em .8em;box-shadow:0 5px 0 #c9951c;animation:pop .6s}
+.res-teams{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:1.4vh 0}
+.rt{border-radius:16px;padding:8px;background:#fff;border:3px solid var(--tc);font-weight:800;font-size:clamp(13px,1.5vw,20px)}
+.rt .m{font-size:clamp(22px,3vw,40px)}
+.rt.good{background:#dcfce7}.rt.bad{background:#fee2e2}
+
+/* pass-turn overlay */
+.pass .big{font-size:clamp(26px,4vw,56px);font-weight:900;color:var(--tc)}
+
+/* puzzle bar */
+.puzzlebar{display:flex;gap:10px;align-items:center;justify-content:center;margin-top:.6vh}
+.pz{width:clamp(34px,4vw,56px);height:clamp(34px,4vw,56px);border-radius:14px;background:rgba(255,255,255,.55);border:3px dashed #94a3b8;display:grid;place-items:center;font-size:clamp(16px,2vw,26px);color:#64748b;transition:all .5s}
+.pz.got{background:linear-gradient(#ffe27a,#f59e0b);border:3px solid #fff;color:#fff;transform:rotate(-6deg) scale(1.1);box-shadow:0 4px 0 #b45309}
+
+/* stage banner */
+#banner{position:fixed;inset:0;z-index:30;display:none;align-items:center;justify-content:center;background:radial-gradient(circle,rgba(20,83,45,.7),rgba(10,30,50,.85))}
+#banner.on{display:flex}
+.bn{text-align:center;color:#fff;animation:pop .6s cubic-bezier(.2,1.4,.4,1)}
+.bn .num{font-size:clamp(20px,2.6vw,36px);font-weight:800;color:var(--gold);letter-spacing:.2em}
+.bn h2{font-size:clamp(32px,6.5vw,92px);font-weight:900;text-shadow:0 6px 0 #14532d,0 14px 30px rgba(0,0,0,.5);margin:1vh 0}
+.bn .stars{font-size:clamp(30px,5vw,70px)}
+.bn p{font-size:clamp(16px,2vw,28px);font-weight:700}
+
+/* ===== Victory ===== */
+#sV{justify-content:flex-start;overflow:auto;padding-top:3vh}
+.vwrap{width:100%;max-width:1400px;display:grid;grid-template-columns:1.1fr 1fr;gap:2.4vw;align-items:center;margin:auto 0}
+.vmap{padding:2vh 1.5vw;text-align:center}
+.vmap svg{width:100%;max-height:62vh}
+.vmap small{color:#64748b;font-weight:600}
+.vtext{text-align:center;color:#fff}
+.vtitle{font-size:clamp(22px,3.5vw,52px);font-weight:900;line-height:1.15;text-shadow:0 4px 0 #14532d,0 10px 22px rgba(0,0,0,.5);-webkit-text-stroke:1.5px #14532d;paint-order:stroke fill;animation:glow 2s ease-in-out infinite alternate}
+@keyframes glow{from{filter:drop-shadow(0 0 4px #ffe27a)}to{filter:drop-shadow(0 0 22px #ffc83d)}}
+.medalbox{margin:2vh auto;padding:2vh 2vw;color:var(--ink);max-width:560px}
+.medal{font-size:clamp(70px,11vw,160px);line-height:1;animation:spinm 2.5s ease-in-out infinite;display:inline-block;filter:drop-shadow(0 10px 10px rgba(0,0,0,.3))}
+@keyframes spinm{0%,100%{transform:rotateY(-25deg)}50%{transform:rotateY(25deg)}}
+.medalname{font-size:clamp(22px,3vw,42px);font-weight:900}
+.totalscore{font-size:clamp(20px,2.6vw,36px);font-weight:800;color:#b45309}
+.totalscore b{font-size:1.5em}
+.rank{display:grid;gap:8px;margin-top:1.4vh;text-align:left}
+.rrow{display:flex;align-items:center;gap:12px;background:#fff;border-radius:16px;padding:8px 14px;border:3px solid var(--tc);font-weight:800;font-size:clamp(15px,1.8vw,24px)}
+.rrow .rk{font-size:1.5em}.rrow .nm{flex:1}.rrow .sc{color:var(--green2)}
+.rrow.win{background:linear-gradient(#fff7d6,#ffe08a);transform:scale(1.04)}
+.vbtns{display:flex;gap:16px;justify-content:center;flex-wrap:wrap;margin:1.6vh 0}
+.stats{font-weight:700;font-size:clamp(14px,1.6vw,22px);margin-top:1vh;color:#475569}
+
+#fx{position:fixed;inset:0;z-index:40;pointer-events:none}
+
+/* ===== Teacher modal ===== */
+#teach{position:fixed;inset:0;z-index:50;display:none;align-items:center;justify-content:center;background:rgba(10,30,50,.7)}
+#teach.on{display:flex}
+.tbox{width:min(1000px,94vw);max-height:92vh;overflow:auto;padding:3vh 2.4vw;background:#fff;border-radius:26px}
+.tbox h3{color:var(--green2);font-size:26px;margin-bottom:6px}
+.tbox p.note{color:#64748b;font-size:15px;margin-bottom:14px}
+.tq{border:2px solid #e2e8f0;border-radius:16px;padding:12px 14px;margin-bottom:12px}
+.tq h4{font-size:16px;margin-bottom:8px}
+.tq label{display:block;padding:3px 0;font-size:15px;cursor:pointer}
+.tq textarea{width:100%;margin-top:6px;font:inherit;font-size:14px;border:2px solid #e2e8f0;border-radius:10px;padding:8px;min-height:56px;resize:vertical}
+.tbtns{display:flex;gap:10px;justify-content:flex-end;margin-top:10px;flex-wrap:wrap}
+.warn{background:#fff7ed;border:2px solid #fdba74;border-radius:12px;padding:8px 12px;font-size:14px;margin-bottom:8px;color:#9a3412}
+
+@media (max-width:900px){
+  .qlayout{grid-template-columns:1fr}.guide-col{display:none}
+  .opts{grid-template-columns:1fr}
+  .vwrap{grid-template-columns:1fr}
+  .jnode small{display:none}.hud .brand{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ============ BACKGROUND ============ -->
+<div id="bg">
+<svg viewBox="0 0 1600 900" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#38bdf8"/><stop offset=".55" stop-color="#bae6fd"/><stop offset="1" stop-color="#fef3c7"/></linearGradient>
+    <linearGradient id="m1" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#a5b4fc"/><stop offset="1" stop-color="#c7d2fe"/></linearGradient>
+    <linearGradient id="m2" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fbf9a"/><stop offset="1" stop-color="#a7dcc0"/></linearGradient>
+    <linearGradient id="m3" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2f9e5b"/><stop offset="1" stop-color="#58c27d"/></linearGradient>
+    <linearGradient id="m4" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f7a43"/><stop offset="1" stop-color="#145c33"/></linearGradient>
+    <radialGradient id="sun"><stop offset="0" stop-color="#fff7c2"/><stop offset=".5" stop-color="#ffd84d"/><stop offset="1" stop-color="#ffd84d" stop-opacity="0"/></radialGradient>
+    <g id="cloudShape"><ellipse cx="0" cy="0" rx="90" ry="34" fill="#fff"/><ellipse cx="-50" cy="8" rx="60" ry="26" fill="#fff"/><ellipse cx="55" cy="10" rx="65" ry="26" fill="#fff"/><ellipse cx="10" cy="-22" rx="46" ry="30" fill="#fff"/></g>
+    <g id="house"><path d="M-46 -34 L0 -74 L46 -34 Z" fill="#b45309"/><rect x="-36" y="-34" width="72" height="30" fill="#d97706"/><rect x="-10" y="-30" width="20" height="26" fill="#78350f"/><g stroke="#78350f" stroke-width="5"><line x1="-30" y1="-4" x2="-30" y2="22"/><line x1="0" y1="-4" x2="0" y2="22"/><line x1="30" y1="-4" x2="30" y2="22"/></g></g>
+  </defs>
+  <rect width="1600" height="900" fill="url(#sky)"/>
+  <g class="sunrays" opacity=".35"><g fill="#fff3a8"><polygon points="1280,150 1230,-400 1330,-400"/><polygon points="1280,150 1700,-200 1760,-120"/><polygon points="1280,150 1760,300 1740,380"/><polygon points="1280,150 900,500 840,430"/><polygon points="1280,150 600,100 600,180"/></g></g>
+  <circle cx="1280" cy="150" r="170" fill="url(#sun)"/>
+  <use href="#cloudShape" class="cloud c1" x="0" y="120" transform="translate(0,0)"/>
+  <use href="#cloudShape" class="cloud c2" x="0" y="230" transform="translate(0,0) scale(.8)"/>
+  <use href="#cloudShape" class="cloud c3" x="0" y="80" transform="scale(1.2)"/>
+  <!-- far mountains -->
+  <path d="M0 520 L140 380 L260 470 L420 300 L560 460 L720 340 L880 480 L1040 320 L1200 470 L1380 350 L1600 480 L1600 900 L0 900Z" fill="url(#m1)"/>
+  <path d="M420 300 l-40 50 l30 -10 l20 30 l20 -30 l25 20z" fill="#fff" opacity=".8"/>
+  <path d="M1040 320 l-40 50 l30 -10 l20 30 l20 -30 l25 20z" fill="#fff" opacity=".8"/>
+  <path d="M0 600 L180 470 L330 580 L520 430 L700 590 L900 450 L1100 600 L1300 470 L1600 620 L1600 900 L0 900Z" fill="url(#m2)"/>
+  <g class="mist"><ellipse cx="500" cy="590" rx="420" ry="26" fill="#fff" opacity=".6"/><ellipse cx="1180" cy="630" rx="480" ry="30" fill="#fff" opacity=".55"/></g>
+  <!-- terraced hill left -->
+  <path d="M0 900 L0 520 Q200 470 420 560 Q560 620 700 900Z" fill="url(#m3)"/>
+  <g fill="none" stroke-width="16" stroke-linecap="round">
+    <path d="M10 580 Q200 530 400 610" stroke="#f9d65c" opacity=".85"/>
+    <path d="M10 640 Q220 580 470 680" stroke="#86d36b"/>
+    <path d="M10 700 Q240 640 530 750" stroke="#f9d65c" opacity=".85"/>
+    <path d="M10 760 Q260 700 590 820" stroke="#86d36b"/>
+    <path d="M10 820 Q280 760 650 890" stroke="#f9d65c" opacity=".85"/>
+  </g>
+  <!-- terraced hill right -->
+  <path d="M1600 900 L1600 480 Q1380 470 1180 580 Q1020 680 900 900Z" fill="url(#m3)"/>
+  <g fill="none" stroke-width="18" stroke-linecap="round">
+    <path d="M1590 540 Q1400 520 1230 620" stroke="#86d36b"/>
+    <path d="M1590 605 Q1380 580 1180 690" stroke="#f9d65c" opacity=".85"/>
+    <path d="M1590 670 Q1360 640 1130 760" stroke="#86d36b"/>
+    <path d="M1590 735 Q1340 700 1090 830" stroke="#f9d65c" opacity=".85"/>
+    <path d="M1590 800 Q1320 760 1050 890" stroke="#86d36b"/>
+  </g>
+  <use href="#house" x="1380" y="590"/><use href="#house" x="1480" y="640" transform="translate(0,0) scale(.8)" />
+  <use href="#house" x="200" y="560" transform="scale(.9)"/>
+  <!-- foreground -->
+  <path d="M0 900 L0 800 Q400 760 800 810 Q1200 860 1600 790 L1600 900Z" fill="url(#m4)"/>
+  <g fill="#14532d"><path d="M60 830 l25 -70 l25 70z"/><path d="M110 840 l20 -55 l20 55z"/><path d="M1480 830 l25 -75 l25 75z"/><path d="M1530 845 l20 -55 l20 55z"/><path d="M1420 850 l18 -50 l18 50z"/></g>
+</svg>
+</div>
+
+<canvas id="fx"></canvas>
+
+<div id="app">
+
+  <!-- ===== START ===== -->
+  <section class="screen on" id="sStart">
+    <div class="start-tools">
+      <button class="iconbtn" id="btnSnd0" title="Bật/tắt âm thanh">🔊</button>
+      <button class="iconbtn" id="btnT0" title="Giáo viên: chỉnh đáp án">⚙️</button>
+    </div>
+    <div class="title-wrap">
+      <div class="badge-top">🧭 ĐỊA LÍ VIỆT NAM • TRÒ CHƠI KHÁM PHÁ</div>
+      <h1 class="game">GIẢI CỨU<br><span>BẢN ĐỒ</span></h1>
+      <div class="subtitle">Chinh phục vùng Trung du và miền núi phía Bắc</div>
+    </div>
+    <div class="modes">
+      <button class="btn pulse" id="mSolo">🧗 Chơi cá nhân</button>
+      <button class="btn blue" id="mTeam">🏆 Thi đấu 4 đội</button>
+    </div>
+    <div class="start-guide" id="startGuide"></div>
+  </section>
+
+  <!-- ===== TEAM SETUP ===== -->
+  <section class="screen" id="sSetup">
+    <div class="glass setup">
+      <h2>🏆 Thi đấu 4 đội – Đặt tên đội</h2>
+      <div class="teamgrid" id="teamgrid"></div>
+      <div style="display:flex;gap:14px;justify-content:center">
+        <button class="btn small blue" id="setupBack">← Quay lại</button>
+        <button class="btn green" id="setupGo">Xuất phát! 🚩</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== QUESTION ===== -->
+  <section class="screen" id="sQ">
+    <div class="hud">
+      <div class="brand">GIẢI CỨU<br>BẢN ĐỒ</div>
+      <div class="journey" id="journey"></div>
+      <div class="scorebox" id="scorebox"><small>ĐIỂM</small><b id="scoreval">0</b></div>
+      <button class="iconbtn" id="btnSnd" title="Bật/tắt âm thanh">🔊</button>
+      <button class="iconbtn" id="btnHome" title="Về màn hình chính">🏠</button>
+    </div>
+    <div class="qlayout">
+      <div class="guide-col guide">
+        <div class="bubble" id="bubble">Cố lên nhé!</div>
+        <div id="guideSlot"></div>
+        <div class="puzzlebar" id="puzzlebar"></div>
+      </div>
+      <div class="main-col">
+        <div class="glass qcard">
+          <div class="tag"><small>CÂU</small><b id="qno">1</b></div>
+          <div style="flex:1">
+            <div class="qstage" id="qstage"></div>
+            <div class="qtext" id="qtext"></div>
+          </div>
+          <div class="timer" id="timer">
+            <svg viewBox="0 0 100 100"><circle class="bgc" cx="50" cy="50" r="42"/><circle class="fg" id="tring" cx="50" cy="50" r="42" stroke-dasharray="264" stroke-dashoffset="0"/></svg>
+            <b id="tnum">20</b>
+          </div>
+        </div>
+        <div class="opts" id="opts"></div>
+      </div>
+    </div>
+    <div class="teamstrip" id="teamstrip"></div>
+
+    <div class="fb" id="fb"><div class="glass fbcard" id="fbcard"></div></div>
+  </section>
+
+  <!-- ===== VICTORY ===== -->
+  <section class="screen" id="sV">
+    <div class="vwrap">
+      <div class="glass vmap" id="vmap"></div>
+      <div class="vtext">
+        <div class="vtitle">CHÚC MỪNG! EM ĐÃ CHINH PHỤC VÙNG TRUNG DU VÀ MIỀN NÚI PHÍA BẮC!</div>
+        <div class="glass medalbox" id="medalbox"></div>
+        <div class="vbtns">
+          <button class="btn green" id="btnAgain">🔄 Chơi lại</button>
+          <button class="btn small blue" id="btnFw">🎆 Pháo hoa</button>
+          <button class="btn small" id="btnHome2">🏠 Màn hình chính</button>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="banner"><div class="bn" id="bn"></div></div>
+
+<div id="teach">
+  <div class="tbox">
+    <h3>⚙️ Giáo viên: kiểm tra đáp án &amp; lời giải thích</h3>
+    <p class="note">Nội dung câu hỏi và các phương án được cố định, không thể sửa. Thầy/cô chỉ chọn đáp án đúng và chỉnh phần giải thích. Dữ liệu được lưu trên trình duyệt này.</p>
+    <div id="teachList"></div>
+    <div class="tbtns">
+      <button class="btn small" id="tReset">Khôi phục mặc định</button>
+      <button class="btn small blue" id="tCancel">Đóng</button>
+      <button class="btn small green" id="tSave">Lưu</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================== DỮ LIỆU CÂU HỎI (giữ nguyên 100% nội dung gốc) ================== */
+const STAGES=["Nhà thám hiểm thông thái","Giải mã bản đồ","Truy tìm địa danh","Nhà địa lí tài ba","Chinh phục đỉnh núi"];
+const QUESTIONS=[
+ {q:"Trung du và miền núi phía Bắc tiếp giáp với",
+  opts:["Trung Quốc và Lào.","Lào và Thái Lan.","Thái Lan và Campuchia."],
+  ans:0, exp:"Vùng có đường biên giới với Trung Quốc ở phía bắc và giáp Lào ở phía tây."},
+ {q:"Sau sát nhập Trung du và miền núi phía Bắc bao gồm",
+  opts:["11 tỉnh.","15 tỉnh.","13 tỉnh.","9 tỉnh."],
+  ans:3, exp:"Sau khi sắp xếp lại đơn vị hành chính, vùng Trung du và miền núi phía Bắc gồm 9 tỉnh."},
+ {q:"Tỉnh nào KHÔNG thuộc vùng Trung du miền núi phía Bắc vừa giáp Trung Quốc?",
+  opts:["Quảng Ninh.","Điện Biên.","Cao Bằng.","Lạng Sơn"],
+  ans:0, exp:"Quảng Ninh là tỉnh ven biển, không giáp Lào; Điện Biên giáp cả Trung Quốc và Lào."},
+ {q:"Đặc điểm nào sau đây không phải của Trung du & miền núi phía Bắc?",
+  opts:["Có diện tích lớn thứ 2 cả nước.","Có sự phân hóa thành hai tiểu vùng.","Có mật độ dân số đông nhất so với các vùng khác.","Giáp cả Trung Quốc và Lào."],
+  ans:2, exp:"Đây là vùng miền núi, dân cư thưa thớt, mật độ dân số thấp so với nhiều vùng khác."},
+ {q:"Ý nào không đúng về đặc điểm tự nhiên của vùng Tây Bắc?",
+  opts:["Nhiều sông lớn, dốc.","Chủ yếu núi trung bình và thấp.","Khí hậu nhiệt đới ẩm gió mùa, mùa đông ít lạnh hơn.","Phát triển ngành trồng rừng."],
+  ans:1, exp:"Tây Bắc có địa hình cao, nhiều dãy núi cao như Hoàng Liên Sơn; núi trung bình và thấp là đặc điểm của Đông Bắc."}
+];
+const ORIGINAL=JSON.parse(JSON.stringify(QUESTIONS.map(x=>({ans:x.ans,exp:x.exp}))));
+const LS="gcbd_answers_v2";try{localStorage.removeItem("gcbd_answers_v1")}catch(e){}
+try{const s=JSON.parse(localStorage.getItem(LS)||"null");if(s)s.forEach((v,i)=>{if(QUESTIONS[i]&&v){QUESTIONS[i].ans=v.ans;QUESTIONS[i].exp=v.exp}})}catch(e){}
+
+const LET=["A","B","C","D"];
+const TCOL=["#ef4444","#3b82f6","#16a34a","#a855f7"];
+const TIME=20, PTS=100;
+const $=id=>document.getElementById(id);
+
+/* ================== ÂM THANH ================== */
+let AC=null,muted=false;
+function actx(){if(!AC){try{AC=new (window.AudioContext||window.webkitAudioContext)()}catch(e){}}if(AC&&AC.state==="suspended")AC.resume();return AC}
+function tone(f,t0,d,type="sine",vol=.18){const a=actx();if(!a||muted)return;const o=a.createOscillator(),g=a.createGain();o.type=type;o.frequency.value=f;
+  g.gain.setValueAtTime(0,a.currentTime+t0);g.gain.linearRampToValueAtTime(vol,a.currentTime+t0+.02);g.gain.exponentialRampToValueAtTime(.001,a.currentTime+t0+d);
+  o.connect(g);g.connect(a.destination);o.start(a.currentTime+t0);o.stop(a.currentTime+t0+d+.05)}
+const SFX={
+ click(){tone(520,0,.08,"triangle",.15)},
+ pick(){tone(440,0,.1,"triangle",.15);tone(660,.07,.1,"triangle",.12)},
+ tick(){tone(900,0,.06,"square",.07)},
+ right(){[523,659,784,1047].forEach((f,i)=>tone(f,i*.1,.35,"triangle",.2))},
+ wrong(){tone(220,0,.25,"sawtooth",.12);tone(160,.18,.4,"sawtooth",.12)},
+ unlock(){[392,523,659,784,1047,1319].forEach((f,i)=>tone(f,i*.07,.3,"sine",.17))},
+ win(){const m=[523,523,659,784,1047,784,1047,1319];m.forEach((f,i)=>tone(f,i*.16,.4,"triangle",.2));[262,330,392].forEach((f,i)=>tone(f,i*.3,.9,"sine",.1))},
+ /* Pháo hoa: tiếng vút lên -> nổ trầm -> lách tách lấp lánh. pan: 0 (trái) .. 1 (phải) */
+ firework(pan=.5){
+   const a=actx();if(!a||muted)return;
+   const now=a.currentTime,P=a.createStereoPanner?a.createStereoPanner():null;
+   if(P)P.pan.value=(pan-.5)*1.6;
+   const out=a.createGain();out.gain.value=1;
+   if(P){out.connect(P);P.connect(a.destination)}else out.connect(a.destination);
+   const noise=(dur,pw)=>{const b=a.createBuffer(1,Math.max(1,a.sampleRate*dur|0),a.sampleRate),d=b.getChannelData(0);
+     for(let i=0;i<d.length;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/d.length,pw);const s=a.createBufferSource();s.buffer=b;return s};
+   /* 1) vút lên */
+   const w=a.createOscillator(),wg=a.createGain();w.type="sine";
+   w.frequency.setValueAtTime(380,now);w.frequency.exponentialRampToValueAtTime(2200,now+.6);
+   wg.gain.setValueAtTime(.0001,now);wg.gain.linearRampToValueAtTime(.07,now+.1);wg.gain.exponentialRampToValueAtTime(.0001,now+.62);
+   w.connect(wg);wg.connect(out);w.start(now);w.stop(now+.65);
+   const T=now+.6;
+   /* 2) tiếng nổ: thùm trầm + tiếng xì rộng */
+   const k=a.createOscillator(),kg=a.createGain();k.type="sine";
+   k.frequency.setValueAtTime(150,T);k.frequency.exponentialRampToValueAtTime(35,T+.45);
+   kg.gain.setValueAtTime(.7,T);kg.gain.exponentialRampToValueAtTime(.0001,T+.6);
+   k.connect(kg);kg.connect(out);k.start(T);k.stop(T+.65);
+   const n1=noise(.9,2.5),lp=a.createBiquadFilter(),ng=a.createGain();
+   lp.type="lowpass";lp.frequency.setValueAtTime(3500,T);lp.frequency.exponentialRampToValueAtTime(300,T+.8);
+   ng.gain.value=.55;n1.connect(lp);lp.connect(ng);ng.connect(out);n1.start(T);
+   /* 3) lách tách lấp lánh */
+   const cnt=14+(Math.random()*14|0);
+   for(let i=0;i<cnt;i++){
+     const t=T+.12+Math.random()*1.3,pn=noise(.05,3),hp=a.createBiquadFilter(),pg=a.createGain();
+     hp.type="highpass";hp.frequency.value=2500+Math.random()*3500;pg.gain.value=.12+Math.random()*.18;
+     pn.connect(hp);hp.connect(pg);pg.connect(out);pn.start(t);
+     if(Math.random()<.5){const o=a.createOscillator(),og=a.createGain();o.type="sine";o.frequency.value=2500+Math.random()*2500;
+       og.gain.setValueAtTime(.05,t);og.gain.exponentialRampToValueAtTime(.0001,t+.12);o.connect(og);og.connect(out);o.start(t);o.stop(t+.14)}
+   }
+ },
+ boom(){SFX.firework(Math.random())}
+};
+function setMuted(m){muted=m;document.querySelectorAll("#btnSnd,#btnSnd0").forEach(b=>b.textContent=m?"🔇":"🔊")}
+["btnSnd","btnSnd0"].forEach(id=>$(id).onclick=()=>{setMuted(!muted);if(!muted)SFX.click()});
+
+/* ================== NHÂN VẬT HƯỚNG DẪN ================== */
+const GUIDE_SVG=`<svg viewBox="0 0 200 260" xmlns="http://www.w3.org/2000/svg">
+ <ellipse cx="100" cy="250" rx="60" ry="9" fill="rgba(0,0,0,.2)"/>
+ <rect x="48" y="120" width="30" height="80" rx="14" fill="#b45309"/>
+ <path d="M70 120 h60 q14 0 14 20 v70 q0 16 -16 16 h-56 q-16 0 -16 -16 v-70 q0 -20 14 -20z" fill="#22a45d"/>
+ <rect x="70" y="150" width="60" height="44" rx="10" fill="#f9d65c"/><path d="M80 165 h40 M80 177 h28" stroke="#b45309" stroke-width="5" stroke-linecap="round"/>
+ <rect x="74" y="215" width="20" height="28" rx="8" fill="#1e3a8a"/><rect x="106" y="215" width="20" height="28" rx="8" fill="#1e3a8a"/>
+ <ellipse cx="84" cy="244" rx="16" ry="8" fill="#78350f"/><ellipse cx="116" cy="244" rx="16" ry="8" fill="#78350f"/>
+ <circle cx="152" cy="150" r="13" fill="#fcd9b6"/><rect x="144" y="120" width="26" height="38" rx="13" fill="#22a45d" transform="rotate(-25 157 140)"/>
+ <circle cx="100" cy="82" r="48" fill="#fcd9b6"/>
+ <path d="M52 78 q4 -52 48 -52 q44 0 48 52 q-48 -22 -96 0z" fill="#3b2412"/>
+ <ellipse cx="100" cy="46" rx="74" ry="14" fill="#f59e0b"/><path d="M58 46 q4 -44 42 -44 q38 0 42 44z" fill="#fbbf24"/><rect x="58" y="36" width="84" height="10" fill="#b45309"/>
+ <circle cx="80" cy="86" r="7" fill="#1d2b3a"/><circle cx="120" cy="86" r="7" fill="#1d2b3a"/><circle cx="82" cy="83" r="2.6" fill="#fff"/><circle cx="122" cy="83" r="2.6" fill="#fff"/>
+ <ellipse cx="68" cy="102" rx="9" ry="6" fill="#fca5a5" opacity=".8"/><ellipse cx="132" cy="102" rx="9" ry="6" fill="#fca5a5" opacity=".8"/>
+ <path d="M86 104 q14 16 28 0z" fill="#b91c1c"/>
+</svg>`;
+$("startGuide").innerHTML=GUIDE_SVG;
+$("guideSlot").innerHTML=GUIDE_SVG;
+function say(t){$("bubble").textContent=t}
+
+/* ================== BẢN ĐỒ (SVG minh họa) ================== */
+const MAP_PATH="M70 200 L60 150 L95 120 L110 80 L150 60 L190 40 L240 50 L290 35 L340 55 L360 90 L330 110 L350 140 L320 170 L300 200 L260 215 L220 235 L170 270 L130 300 L100 290 L90 250 Z";
+const SLABS=[[30,125],[125,190],[190,255],[255,320],[320,390]];
+const PCOL=[["#fb7185","#e11d48"],["#fbbf24","#d97706"],["#4ade80","#16a34a"],["#60a5fa","#2563eb"],["#c084fc","#7c3aed"]];
+const PLACES=[["Lai Châu",88,165],["Điện Biên",80,222],["Sơn La",125,250],["Lào Cai",150,100],["Hà Giang",205,72],["Cao Bằng",285,62],["Lạng Sơn",325,118],["Quảng Ninh",338,160],["Thái Nguyên",262,158],["Phú Thọ",215,205],["Tuyên Quang",205,125]];
+function mapSVG(got,showNames){
+  let s=`<svg viewBox="20 10 380 320" xmlns="http://www.w3.org/2000/svg"><defs>`;
+  SLABS.forEach((sl,i)=>{s+=`<clipPath id="cp${i}"><rect x="${sl[0]}" y="0" width="${sl[1]-sl[0]}" height="340"/></clipPath>
+   <linearGradient id="pg${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${PCOL[i][0]}"/><stop offset="1" stop-color="${PCOL[i][1]}"/></linearGradient>`});
+  s+=`</defs><rect x="20" y="10" width="380" height="320" rx="24" fill="#e0f2fe"/>
+   <path d="M360 100 q30 20 40 60 v170 h-90z" fill="#7dd3fc" opacity=".7"/>
+   <text x="372" y="240" font-size="12" fill="#0369a1" font-weight="700" text-anchor="middle" transform="rotate(-80 372 240)">Biển Đông</text>
+   <text x="200" y="26" font-size="12" fill="#64748b" font-weight="700" text-anchor="middle">TRUNG QUỐC</text>
+   <text x="38" y="290" font-size="12" fill="#64748b" font-weight="700">LÀO</text>`;
+  for(let i=0;i<5;i++){
+    const on=got[i];
+    s+=`<g clip-path="url(#cp${i})" style="${on?'':'opacity:.55'}"><path d="${MAP_PATH}" fill="${on?`url(#pg${i})`:'#cbd5e1'}" stroke="${on?'#fff':'#64748b'}" stroke-width="3" ${on?'':'stroke-dasharray="6 5"'} stroke-linejoin="round"/></g>`;
+    const cx=(SLABS[i][0]+SLABS[i][1])/2;
+    if(!on)s+=`<text x="${cx}" y="170" font-size="30" font-weight="900" fill="#64748b" text-anchor="middle">?</text>`;
+    else s+=`<text x="${cx}" y="318" font-size="14" font-weight="800" fill="#16a34a" text-anchor="middle">✔ ${i+1}</text>`;
+  }
+  if(showNames){
+    s+=`<path d="${MAP_PATH}" fill="none" stroke="#fff" stroke-width="3" stroke-linejoin="round"/>`;
+    PLACES.forEach(p=>{s+=`<circle cx="${p[1]}" cy="${p[2]}" r="4" fill="#fff" stroke="#1d2b3a" stroke-width="1.5"/><text x="${p[1]}" y="${p[2]-8}" font-size="10.5" font-weight="800" fill="#1d2b3a" text-anchor="middle" stroke="#fff" stroke-width="3" paint-order="stroke">${p[0]}</text>`});
+  }
+  s+=`</svg>`;return s;
+}
+
+/* ================== TRẠNG THÁI ================== */
+let S=null;
+function newGame(mode,names){
+  S={mode,qi:0,turn:0,score:0,pieces:[0,0,0,0,0],correct:0,
+     results:[], /* mỗi câu: 'ok'|'no' */
+     teams:mode==="team"?names.map(n=>({name:n,score:0})):[],
+     picks:[],locked:false,timer:null,t0:0,scoredQ:{}};
+}
+function show(id){document.querySelectorAll(".screen").forEach(s=>s.classList.remove("on"));$(id).classList.add("on")}
+
+/* ================== MÀN HÌNH BẮT ĐẦU ================== */
+$("mSolo").onclick=()=>{actx();SFX.click();newGame("solo");beginStage()};
+$("mTeam").onclick=()=>{actx();SFX.click();buildSetup();show("sSetup")};
+$("setupBack").onclick=()=>{SFX.click();show("sStart")};
+function buildSetup(){
+  const g=$("teamgrid");if(g.children.length)return;
+  for(let i=0;i<4;i++){g.insertAdjacentHTML("beforeend",`<div class="teamin" style="--tc:${TCOL[i]}"><i>${i+1}</i><input id="tn${i}" maxlength="18" value="Đội ${i+1}"></div>`)}
+}
+$("setupGo").onclick=()=>{SFX.click();const names=[0,1,2,3].map(i=>($("tn"+i).value.trim()||"Đội "+(i+1)));newGame("team",names);beginStage()};
+$("btnHome").onclick=$("btnHome2").onclick=()=>{clearInterval(S&&S.timer);stopFW();SFX.click();show("sStart")};
+$("btnAgain").onclick=()=>{SFX.click();stopFW();if(S.mode==="team"){newGame("team",S.teams.map(t=>t.name))}else newGame("solo");beginStage()};
+
+/* ================== VÒNG CHƠI ================== */
+function banner(html,ms,cb){const b=$("banner");$("bn").innerHTML=html;b.classList.add("on");setTimeout(()=>{b.classList.remove("on");cb&&cb()},ms)}
+
+function beginStage(){
+  clearInterval(S.timer);
+  const i=S.qi;
+  show("sQ");renderHud();
+  $("fb").classList.remove("on");
+  banner(`<div class="num">CHẶNG ${i+1} / 5</div><h2>${STAGES[i]}</h2><div class="stars">⛰️ 🧭 ⛰️</div><p>${S.mode==="team"?"Cả 4 đội lần lượt trả lời – đáp án được công bố sau lượt cuối!":"Chuẩn bị nào, nhà thám hiểm!"}</p>`,1900,()=>{S.turn=0;showQuestion()});
+  SFX.unlock();
+}
+
+function renderHud(){
+  const j=$("journey");let h="";
+  for(let i=0;i<5;i++){
+    let c=""; if(i<S.qi)c=S.results[i]==="ok"?"done":"miss"; else if(i===S.qi)c="cur";
+    h+=`<div class="jnode ${c}"><b>${i<S.qi?(S.results[i]==="ok"?"✔":"✖"):i+1}</b><small>${STAGES[i]}</small></div>`;
+    if(i<4)h+=`<div class="jline"><i style="width:${i<S.qi?100:0}%"></i></div>`;
+  }
+  j.innerHTML=h;
+  let pb="";for(let i=0;i<5;i++)pb+=`<div class="pz ${S.pieces[i]?"got":""}">${S.pieces[i]?"🧩":""}</div>`;
+  $("puzzlebar").innerHTML=pb;
+  updateScore();
+  const ts=$("teamstrip");
+  if(S.mode==="team"){
+    ts.style.display="flex";
+    ts.innerHTML=S.teams.map((t,i)=>`<div class="tchip ${S.turn===i&&!S.reveal?"cur":""}" style="--tc:${TCOL[i]}"><i>${i+1}</i><span>${esc(t.name)}</span><b>${t.score}</b></div>`).join("");
+    $("scorebox").style.display="none";
+  }else{ts.style.display="none";$("scorebox").style.display=""}
+}
+function updateScore(){$("scoreval").textContent=S.score}
+function esc(s){return s.replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]))}
+
+function showQuestion(){
+  const q=QUESTIONS[S.qi];S.locked=false;S.reveal=false;
+  renderHud();
+  $("qno").textContent=S.qi+1;
+  $("qstage").textContent="Chặng "+(S.qi+1)+" • "+STAGES[S.qi]+(S.mode==="team"?" • "+S.teams[S.turn].name:"");
+  $("qtext").textContent=q.q;
+  const o=$("opts");o.innerHTML="";
+  q.opts.forEach((t,i)=>{
+    const b=document.createElement("button");b.className="opt";b.dataset.i=i;
+    b.innerHTML=`<span class="l">${LET[i]}</span><span class="t">${esc(t)}</span>`;
+    b.onclick=()=>choose(i);o.appendChild(b);
+  });
+  const hints=["Quan sát kĩ bản đồ nhé!","Em làm được mà!","Bình tĩnh, suy nghĩ kĩ nào!","Nhà địa lí tài ba đây rồi!","Sắp tới đỉnh núi rồi!"];
+  say(S.mode==="team"?(S.teams[S.turn].name+", đến lượt của em!"):hints[S.qi]);
+  startTimer();
+}
+
+function startTimer(){
+  clearInterval(S.timer);S.t0=Date.now();let lastSec=TIME+1;
+  const ring=$("tring"),num=$("tnum"),tm=$("timer");
+  tm.classList.remove("low");ring.style.strokeDashoffset=0;num.textContent=TIME;
+  S.timer=setInterval(()=>{
+    const el=(Date.now()-S.t0)/1000,left=Math.max(0,TIME-el);
+    ring.style.strokeDashoffset=264*(1-left/TIME);
+    const sec=Math.ceil(left);num.textContent=sec;
+    if(sec<=5)tm.classList.add("low");
+    if(sec!==lastSec){lastSec=sec;if(sec<=5&&sec>0)SFX.tick()}
+    if(left<=0){clearInterval(S.timer);timeUp()}
+  },100);
+}
+
+function choose(i){
+  if(S.locked)return;S.locked=true;clearInterval(S.timer);
+  document.querySelectorAll(".opt").forEach(b=>b.disabled=true);
+  if(S.mode==="solo"){S.picks[S.qi]=i;revealSolo(i)}
+  else{
+    document.querySelector(`.opt[data-i="${i}"]`).classList.add("picked");SFX.pick();
+    teamLock(i);
+  }
+}
+function timeUp(){
+  if(S.locked)return;S.locked=true;document.querySelectorAll(".opt").forEach(b=>b.disabled=true);
+  if(S.mode==="solo"){say("Hết giờ rồi!");revealSolo(-1)}else teamLock(-1);
+}
+
+/* ----- Chế độ cá nhân ----- */
+function revealSolo(pick){
+  const q=QUESTIONS[S.qi],ok=pick===q.ans;
+  document.querySelectorAll(".opt").forEach(b=>{const i=+b.dataset.i;if(i===q.ans)b.classList.add("right");else if(i===pick)b.classList.add("wrong");else b.classList.add("dim")});
+  if(ok&&!S.scoredQ[S.qi]){S.scoredQ[S.qi]=1;S.score+=PTS;S.correct++;S.pieces[S.qi]=1;S.results[S.qi]="ok";SFX.right();burst(innerWidth/2,innerHeight/2.2,60);say("Giỏi lắm! Em nhận được mảnh ghép! 🧩")}
+  else if(!ok){S.results[S.qi]="no";SFX.wrong();say(pick<0?"Hết giờ rồi, không sao đâu!":"Chưa đúng, cố lên lần sau nhé!")}
+  updateScore();
+  setTimeout(()=>{
+    const last=S.qi===4;
+    let h=ok?`<h3>🎉 Chính xác!</h3><div class="pts">+${PTS} điểm</div>`:`<h3>💪 ${pick<0?"Hết giờ rồi!":"Chưa đúng rồi, em thử lại ở chặng sau nhé!"}</h3>`;
+    h+=`<div class="fbans">Đáp án đúng: <b>${LET[q.ans]}. ${esc(q.opts[q.ans])}</b></div><div class="fbexp">💡 ${esc(q.exp)}</div>`;
+    h+=ok?`<div style="margin-bottom:1.6vh;font-weight:800;color:#b45309">🧩 Em nhận được mảnh ghép bản đồ số ${S.qi+1}!</div>`:"";
+    h+=`<button class="btn green" id="nextBtn">${last?"Mở khóa bản đồ 🗺️":"Chặng tiếp theo ➜"}</button>`;
+    const c=$("fbcard");c.className="glass fbcard "+(ok?"ok":"no");c.innerHTML=h;$("fb").classList.add("on");
+    renderHud();
+    $("nextBtn").onclick=()=>{SFX.click();$("fb").classList.remove("on");nextQ()};
+  },1100);
+}
+
+/* ----- Chế độ 4 đội ----- */
+function teamLock(pick){
+  S.picks[S.turn]=pick;
+  const t=S.turn,last=t===S.teams.length-1;
+  const c=$("fbcard");c.className="glass fbcard pass";c.style.setProperty("--tc",TCOL[t]);
+  c.innerHTML=`<div class="big">${esc(S.teams[t].name)} đã chốt đáp án! ${pick<0?"⏰":"🔒"}</div>
+   <p style="font-size:clamp(15px,1.8vw,24px);font-weight:700;margin:2vh 0">${last?"Tất cả các đội đã trả lời. Cùng xem kết quả nào!":"Đáp án sẽ được công bố sau khi cả 4 đội trả lời. Chuyển lượt cho "+esc(S.teams[t+1].name)+"."}</p>
+   <button class="btn green" id="passBtn">${last?"Công bố đáp án 🎯":"Lượt của "+esc(S.teams[t+1].name)+" ➜"}</button>`;
+  setTimeout(()=>{$("fb").classList.add("on");$("passBtn").onclick=()=>{SFX.click();$("fb").classList.remove("on");if(last)revealTeam();else{S.turn++;showQuestion()}}},350);
+}
+function revealTeam(){
+  const q=QUESTIONS[S.qi];S.reveal=true;
+  const picks=S.picks.slice(0,S.teams.length);let any=false;
+  document.querySelectorAll(".opt").forEach(b=>{b.classList.remove("picked");const i=+b.dataset.i;b.classList.add(i===q.ans?"right":"dim")});
+  picks.forEach((p,i)=>{if(p===q.ans){S.teams[i].score+=PTS;any=true}});
+  if(any){S.pieces[S.qi]=1;S.results[S.qi]="ok";S.correct++;SFX.right();burst(innerWidth/2,innerHeight/2.2,70)}else{S.results[S.qi]="no";SFX.wrong()}
+  say(any?"Có đội trả lời đúng! Mảnh ghép đã về tay! 🧩":"Chưa đội nào đúng, cùng xem lời giải nhé!");
+  const last=S.qi===4;
+  let h=`<h3>${any?"🎉 Kết quả chặng "+(S.qi+1):"💪 Kết quả chặng "+(S.qi+1)}</h3>
+   <div class="fbans">Đáp án đúng: <b>${LET[q.ans]}. ${esc(q.opts[q.ans])}</b></div><div class="res-teams">`;
+  picks.forEach((p,i)=>{const ok=p===q.ans;h+=`<div class="rt ${ok?"good":"bad"}" style="--tc:${TCOL[i]}">${esc(S.teams[i].name)}<div class="m">${ok?"✔":"✖"}</div>${p<0?"Hết giờ":"Chọn "+LET[p]}${ok?`<div style="color:#b45309">+${PTS}</div>`:""}</div>`});
+  h+=`</div><div class="fbexp">💡 ${esc(q.exp)}</div><button class="btn green" id="nextBtn">${last?"Mở khóa bản đồ 🗺️":"Chặng tiếp theo ➜"}</button>`;
+  const c=$("fbcard");c.className="glass fbcard "+(any?"ok":"no");c.innerHTML=h;
+  setTimeout(()=>{$("fb").classList.add("on");renderHud();$("nextBtn").onclick=()=>{SFX.click();$("fb").classList.remove("on");nextQ()}},900);
+}
+
+function nextQ(){
+  S.reveal=false;
+  if(S.qi<4){S.qi++;S.picks=[];beginStage()}
+  else victory();
+}
+
+/* ================== CHIẾN THẮNG ================== */
+const MEDALS={gold:["🥇","HUY CHƯƠNG VÀNG"],silver:["🥈","HUY CHƯƠNG BẠC"],bronze:["🥉","HUY CHƯƠNG ĐỒNG"]};
+function victory(){
+  clearInterval(S.timer);
+  show("sV");
+  $("vmap").innerHTML=`<div style="font-weight:900;color:var(--green2);font-size:clamp(16px,2vw,26px);margin-bottom:6px">🗺️ Bản đồ vùng Trung du và miền núi phía Bắc</div>`+mapSVG([1,1,1,1,1],true)+`<small>Bản đồ minh họa (không theo tỉ lệ)</small>`;
+  let h="";
+  if(S.mode==="solo"){
+    const m=S.score>=500?"gold":S.score>=300?"silver":"bronze";
+    h=`<div class="medal">${MEDALS[m][0]}</div><div class="medalname">${MEDALS[m][1]}</div>
+       <div class="totalscore">Tổng điểm: <b>${S.score}</b> / 500</div><div class="stats">Đúng ${S.correct}/5 thử thách • Thu thập ${S.pieces.reduce((a,b)=>a+b,0)}/5 mảnh ghép</div>`;
+  }else{
+    const sorted=S.teams.map((t,i)=>({...t,i})).sort((a,b)=>b.score-a.score);
+    let rank=0,prev=null;sorted.forEach((t,k)=>{if(t.score!==prev){rank=k+1;prev=t.score}t.rank=rank});
+    const top=sorted.filter(t=>t.rank===1);
+    h=`<div class="medal">${top.length>1?"🏆":"🥇"}</div>
+       <div class="medalname">${top.length>1?"Đồng hạng nhất: "+top.map(t=>esc(t.name)).join(" & "):"Đội chiến thắng: "+esc(top[0].name)+" 🎊"}</div>
+       <div class="rank">${sorted.map(t=>`<div class="rrow ${t.rank===1?"win":""}" style="--tc:${TCOL[t.i]}"><span class="rk">${t.rank===1?"🥇":t.rank===2?"🥈":t.rank===3?"🥉":"🏅"}</span><span class="nm">${esc(t.name)}</span><span class="sc">${t.score} điểm</span></div>`).join("")}</div>`;
+  }
+  $("medalbox").innerHTML=h;
+  SFX.win();startFW(true);
+}
+$("btnFw").onclick=()=>{SFX.win();startFW(true)};
+
+/* ================== PHÁO HOA ================== */
+const cv=$("fx"),cx=cv.getContext("2d");let parts=[],fwOn=false,raf=0,fwTimer=0;
+function fit(){cv.width=innerWidth;cv.height=innerHeight}fit();addEventListener("resize",fit);
+function burst(x,y,n=80,hue){
+  hue=hue??Math.random()*360;
+  for(let i=0;i<n;i++){const a=Math.random()*Math.PI*2,sp=Math.random()*7+2;
+    parts.push({x,y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:1,d:Math.random()*.012+.008,h:hue+Math.random()*50-25,s:Math.random()*3+1.5})}
+  loop();
+}
+function loop(){
+  if(raf)return;
+  const step=()=>{
+    cx.clearRect(0,0,cv.width,cv.height);
+    parts.forEach(p=>{p.x+=p.vx;p.y+=p.vy;p.vy+=.07;p.vx*=.985;p.life-=p.d;
+      cx.globalAlpha=Math.max(p.life,0);cx.fillStyle=`hsl(${p.h},100%,60%)`;cx.beginPath();cx.arc(p.x,p.y,p.s,0,7);cx.fill()});
+    parts=parts.filter(p=>p.life>0);
+    if(parts.length||fwOn)raf=requestAnimationFrame(step);else{raf=0;cx.clearRect(0,0,cv.width,cv.height)}
+  };
+  raf=requestAnimationFrame(step);
+}
+function startFW(snd){
+  stopFW();fwOn=true;
+  const shoot=()=>{
+    const x=Math.random()*innerWidth*.9+innerWidth*.05,y=Math.random()*innerHeight*.5+innerHeight*.08;
+    if(snd)SFX.firework(x/innerWidth);
+    setTimeout(()=>{if(fwOn)burst(x,y,90)},snd?600:0); /* hình nổ khớp với tiếng nổ */
+  };
+  shoot();fwTimer=setInterval(shoot,900);
+  setTimeout(()=>{clearInterval(fwTimer);fwOn=false},9000);
+  loop();
+}
+function stopFW(){clearInterval(fwTimer);fwOn=false;parts=[]}
+
+/* ================== PHÍM TẮT ================== */
+addEventListener("keydown",e=>{
+  if(!$("sQ").classList.contains("on")||S.locked||$("fb").classList.contains("on")||$("banner").classList.contains("on"))return;
+  const k=e.key.toUpperCase();let i=LET.indexOf(k);if(i<0&&"1234".includes(k))i=+k-1;
+  if(i>=0&&i<QUESTIONS[S.qi].opts.length)choose(i);
+});
+
+/* ================== GIÁO VIÊN: CHỈNH ĐÁP ÁN ================== */
+function openTeach(){
+  const L=$("teachList");L.innerHTML="";
+  QUESTIONS.forEach((q,qi)=>{
+    let h=`<div class="tq"><h4>Câu ${qi+1}. ${esc(q.q)}</h4>`;
+    if(qi===2)h+=`<div class="warn">⚠ Lưu ý: cả 4 tỉnh Quảng Ninh, Điện Biên, Cao Bằng, Lạng Sơn đều có đường biên giới với Trung Quốc. Vui lòng đối chiếu và chọn đáp án theo slide gốc.</div>`;
+    q.opts.forEach((o,i)=>{h+=`<label><input type="radio" name="ta${qi}" value="${i}" ${q.ans===i?"checked":""}> <b>${LET[i]}.</b> ${esc(o)}</label>`});
+    h+=`<textarea id="te${qi}" placeholder="Giải thích ngắn gọn">${esc(q.exp)}</textarea></div>`;
+    L.insertAdjacentHTML("beforeend",h);
+  });
+  $("teach").classList.add("on");
+}
+$("btnT0").onclick=()=>{SFX.click();openTeach()};
+$("tCancel").onclick=()=>$("teach").classList.remove("on");
+$("tSave").onclick=()=>{
+  QUESTIONS.forEach((q,qi)=>{const r=document.querySelector(`input[name="ta${qi}"]:checked`);if(r)q.ans=+r.value;q.exp=$("te"+qi).value.trim()||q.exp});
+  try{localStorage.setItem(LS,JSON.stringify(QUESTIONS.map(q=>({ans:q.ans,exp:q.exp}))))}catch(e){}
+  $("teach").classList.remove("on");
+};
+$("tReset").onclick=()=>{ORIGINAL.forEach((o,i)=>{QUESTIONS[i].ans=o.ans;QUESTIONS[i].exp=o.exp});try{localStorage.removeItem(LS)}catch(e){}openTeach()};
+</script>
+</body>
+</html>
